@@ -9,6 +9,7 @@ class AmbientMixer {
     this.presetManager = null;
     this.timer = null;
     this.currentSoundState = {};
+    this.MasterVolume = 100;
     this.isInitialized = false;
   }
 
@@ -42,6 +43,14 @@ class AmbientMixer {
         this.setSoundVolume(soundId, volume);
       }
     });
+
+    const masterVolumeSlider = document.getElementById("masterVolume");
+    if (masterVolumeSlider) {
+      masterVolumeSlider.addEventListener("input", (e) => {
+        const volume = parseInt(e.target.value);
+        this.setMasterVolume(volume);
+      });
+    }
   }
 
   loadAllSounds() {
@@ -82,9 +91,44 @@ class AmbientMixer {
   }
 
   setSoundVolume(soundId, volume) {
-    this.soundManager.setVolume(soundId, volume);
+    // Calculate effective volume with master volume
+    const effectiveVolume = (volume * this.masterVolume) / 100;
+
+    const audio = this.soundManager.audioElements.get(soundId);
+
+    if (audio) {
+      audio.volume = effectiveVolume / 100;
+    }
 
     this.ui.updateVolumeDisplay(soundId, volume);
+  }
+
+  setMasterVolume(volume) {
+    this.MasterVolume = volume;
+
+    const masterVolumeValue = document.getElementById("masterVolumeValue");
+    if (masterVolumeValue) {
+      masterVolumeValue.textContent = `${volume}%`;
+    }
+
+    this.applyMasterVolumeToAll();
+  }
+
+  applyMasterVolumeToAll() {
+    for (const [soundId, audio] of this.soundManager.audioElements) {
+      if (!audio.paused) {
+        const card = document.querySelector(`[data-sound="${soundId}"]`);
+        const slider = card?.querySelector(".volume-slider");
+
+        if (slider) {
+          const individualVolume = parseInt(slider.value);
+          // Calculate effective volume (individual * master / 100)
+          const effectiveVolume = (individualVolume * this.masterVolume) / 100;
+
+          audio.volume = effectiveVolume / 100;
+        }
+      }
+    }
   }
 }
 

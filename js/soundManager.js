@@ -50,7 +50,6 @@ export class SoundManager {
     }
 
     audio.volume = volume / 100;
-    console.log(`Volume for ${soundId}: ${volume}`);
     return true;
   }
 }
