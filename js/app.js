@@ -34,6 +34,14 @@ class AmbientMixer {
         await this.toggleSound(soundId);
       }
     });
+
+    document.addEventListener("input", (e) => {
+      if (e.target.classList.contains("volume-slider")) {
+        const soundId = e.target.dataset.sound;
+        const volume = parseInt(e.target.value);
+        this.setSoundVolume(soundId, volume);
+      }
+    });
   }
 
   loadAllSounds() {
@@ -55,13 +63,28 @@ class AmbientMixer {
     }
 
     if (audio.paused) {
-      this.soundManager.setVolume(soundId, 50);
+      const card = document.querySelector(`[data-sound="${soundId}"]`);
+      const slider = card.querySelector(".volume-slider");
+      let volume = parseInt(slider.value);
+
+      if (volume === 0) {
+        volume = 50;
+        this.ui.updateVolumeDisplay(soundId, volume);
+      }
+
+      this.soundManager.setVolume(soundId, volume);
       await this.soundManager.playSound(soundId);
       this.ui.updateSoundPlayButton(soundId, true);
     } else {
       this.soundManager.pauseSound(soundId);
       this.ui.updateSoundPlayButton(soundId, false);
     }
+  }
+
+  setSoundVolume(soundId, volume) {
+    this.soundManager.setVolume(soundId, volume);
+
+    this.ui.updateVolumeDisplay(soundId, volume);
   }
 }
 
