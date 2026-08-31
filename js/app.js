@@ -22,6 +22,10 @@ class AmbientMixer {
 
       this.loadAllSounds();
 
+      sounds.forEach((sound) => {
+        this.currentSoundState[sound.id] = 0;
+      });
+
       this.isInitialized = true;
     } catch (error) {
       console.error("Failed to initialize!");
@@ -33,6 +37,11 @@ class AmbientMixer {
       if (e.target.closest(".play-btn")) {
         const soundId = e.target.closest(".play-btn").dataset.sound;
         await this.toggleSound(soundId);
+      }
+
+      if (e.target.closest(".preset-btn")) {
+        const presetKey = e.target.closest(".preset-btn").dataset.preset;
+        await this.loadPreset(presetKey);
       }
     });
 
@@ -140,6 +149,8 @@ class AmbientMixer {
   }
 
   setSoundVolume(soundId, volume) {
+    this.currentSoundState[soundId] = volume;
+
     // Calculate effective volume with master volume
     const effectiveVolume = (volume * this.masterVolume) / 100;
 
@@ -198,8 +209,47 @@ class AmbientMixer {
   resetAll() {
     this.soundManager.stopAll();
     this.masterVolume = 100;
+
+    sounds.forEach((sound) => {
+      this.currentSoundState[sound.id] = 0;
+    });
+
     this.ui.resetUI();
-    console.log("RESET");
+  }
+
+  loadPreset(presetKey) {
+    const preset = defaultPresets[presetKey];
+
+    if (!preset) {
+      console.error(`Preset ${presetKey} not found`);
+      return;
+    }
+
+    this.soundManager.stopAll();
+
+    sounds.forEach((sound) => {
+      this.currentSoundState[sound.id] = 0;
+      this.ui.updateVolumeDisplay(sound.id, 0);
+      this.ui.updateSoundPlayButton(sound.id, false);
+    });
+
+    for (const [soundId, volume] of Object.entries(preset.sounds)) {
+      this.currentSoundState[soundId] = volume;
+
+      this.ui.updateVolumeDisplay(soundId, volume);
+
+      const effectiveVolume = (volume * this.masterVolume) / 100;
+      const audio = this.soundManager.audioElements.get(soundId);
+
+      if (audio) {
+        audio.volume = effectiveVolume / 100;
+
+        audio.play();
+        this.ui.updateSoundPlayButton(soundId, true);
+      }
+    }
+    this.soundManager.isPlaying = true;
+    this.ui.updateMainPlayButton(true);
   }
 }
 
