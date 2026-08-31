@@ -70,4 +70,14 @@ export class SoundManager {
     }
     this.isPlaying = false;
   }
+
+  stopAll() {
+    for (const [soundId, audio] of this.audioElements) {
+      if (!audio.paused) {
+        audio.pause();
+      }
+      audio.currentTime = 0;
+    }
+    this.isPlaying = false;
+  }
 }
