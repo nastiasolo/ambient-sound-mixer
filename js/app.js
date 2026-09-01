@@ -2,13 +2,17 @@ import { sounds, defaultPresets } from "./soundData.js";
 import { SoundManager } from "./soundManager.js";
 import { PresetManager } from "./presetManager.js";
 import { UI } from "./ui.js";
+import { Timer } from "./timer.js";
 
 class AmbientMixer {
   constructor() {
     this.soundManager = new SoundManager();
     this.ui = new UI();
     this.presetManager = new PresetManager();
-    this.timer = null;
+    this.timer = new Timer(
+      () => this.onTimerComplete(),
+      (minutes, seconds) => this.ui.updateTimerDisplay(minutes, seconds),
+    );
     this.currentSoundState = {};
     this.masterVolume = 100;
     this.isInitialized = false;
@@ -115,6 +119,19 @@ class AmbientMixer {
       this.ui.modal.addEventListener("click", (e) => {
         if (e.target === this.ui.modal) {
           this.ui.hideModal();
+        }
+      });
+    }
+
+    const timerSelect = document.getElementById("timerSelect");
+    if (timerSelect) {
+      timerSelect.addEventListener("change", (e) => {
+        const minutes = parseInt(e.target.value);
+        if (minutes > 0) {
+          this.timer.start(minutes);
+          console.log(`Timer started for ${minutes} minutes`);
+        } else {
+          this.timer.stop();
         }
       });
     }
@@ -260,6 +277,10 @@ class AmbientMixer {
   resetAll() {
     this.soundManager.stopAll();
     this.masterVolume = 100;
+    this.timer.stop();
+    if (this.ui.timerSelect) {
+      this.ui.timerSelect.value = "0";
+    }
 
     this.ui.setActivePreset = 0;
 
@@ -363,6 +384,25 @@ class AmbientMixer {
     if (this.presetManager.deletePreset(presetId)) {
       this.ui.removeCustomPreset(presetId);
       console.log(`Custom preset ${presetId} deleted`);
+    }
+  }
+
+  onTimerComplete() {
+    this.soundManager.pauseAll();
+    this.ui.updateMainPlayButton(false);
+
+    sounds.forEach((sound) => {
+      this.ui.updateSoundPlayButton(sound.id, false);
+    });
+
+    const timerSelect = document.getElementById("timerSelect");
+    if (timerSelect) {
+      timerSelect.value = "0";
+    }
+
+    if (this.ui.timerDisplay) {
+      this.ui.timerDisplay.textContent = "";
+      this.ui.timerDisplay.classList.add("hidden");
     }
   }
 }

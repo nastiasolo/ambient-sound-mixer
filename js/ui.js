@@ -206,4 +206,16 @@ export class UI {
       button.remove();
     }
   }
+
+  updateTimerDisplay(minutes, seconds) {
+    if (this.timerDisplay) {
+      if (minutes > 0 || seconds > 0) {
+        const formattedTime = `${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
+        this.timerDisplay.textContent = formattedTime;
+        this.timerDisplay.classList.remove("hidden");
+      } else {
+        this.timerDisplay.classList.add("hidden");
+      }
+    }
+  }
 }
