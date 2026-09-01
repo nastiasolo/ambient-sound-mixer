@@ -21,6 +21,8 @@ class AmbientMixer {
 
       this.setupEventListeners();
 
+      this.loadCustomPresetsUI();
+
       this.loadAllSounds();
 
       sounds.forEach((sound) => {
@@ -43,6 +45,11 @@ class AmbientMixer {
       if (e.target.closest(".preset-btn")) {
         const presetKey = e.target.closest(".preset-btn").dataset.preset;
         await this.loadPreset(presetKey);
+      }
+
+      if (e.target.closest(".custom-preset-btn")) {
+        const presetKey = e.target.closest(".custom-preset-btn").dataset.preset;
+        await this.loadPreset(presetKey, true);
       }
     });
 
@@ -139,6 +146,7 @@ class AmbientMixer {
       this.ui.updateSoundPlayButton(soundId, true);
     } else {
       this.soundManager.pauseSound(soundId);
+      this.currentSoundState[soundId] = 0;
       this.ui.updateSoundPlayButton(soundId, false);
 
       this.currentSoundState[soundId] = 0;
@@ -244,6 +252,8 @@ class AmbientMixer {
     this.soundManager.stopAll();
     this.masterVolume = 100;
 
+    this.ui.setActivePreset = 0;
+
     sounds.forEach((sound) => {
       this.currentSoundState[sound.id] = 0;
     });
@@ -251,8 +261,14 @@ class AmbientMixer {
     this.ui.resetUI();
   }
 
-  loadPreset(presetKey) {
-    const preset = defaultPresets[presetKey];
+  loadPreset(presetKey, custom = false) {
+    let preset;
+
+    if (custom) {
+      preset = this.presetManager.loadPreset(presetKey);
+    } else {
+      preset = defaultPresets[presetKey];
+    }
 
     if (!preset) {
       console.error(`Preset ${presetKey} not found`);
@@ -284,6 +300,10 @@ class AmbientMixer {
     }
     this.soundManager.isPlaying = true;
     this.ui.updateMainPlayButton(true);
+
+    if (presetKey) {
+      this.ui.setActivePreset(presetKey);
+    }
   }
 
   showSavePresetModal() {
@@ -321,6 +341,13 @@ class AmbientMixer {
     this.ui.addCustomPreset(name, presetId);
 
     this.ui.hideModal();
+  }
+
+  loadCustomPresetsUI() {
+    const customPresets = this.presetManager.customPresets;
+    for (const [presetId, preset] of Object.entries(customPresets)) {
+      this.ui.addCustomPreset(preset.name, presetId);
+    }
   }
 }
 

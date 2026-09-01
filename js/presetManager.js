@@ -8,6 +8,10 @@ export class PresetManager {
     return stored ? JSON.parse(stored) : {};
   }
 
+  loadPreset(presetId) {
+    return this.customPresets[presetId] || null;
+  }
+
   savedCustomPresets() {
     localStorage.setItem(
       "ambientMixerPresets",
